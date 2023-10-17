@@ -1,23 +1,178 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
+import { Table, Thead, Tbody, Tr, Th, Td } from 'react-super-responsive-table';
+import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
 import './App.css';
 
+function getDate() {
+  const today = new Date();
+  const month = today.getMonth() + 1;
+  const year = today.getFullYear();
+  const date = today.getDate();
+  return `${year}-${month}-${date}`;
+}
+
 function App() {
+  const [startDate, setStartDate] = useState(new Date(getDate()));
+  const [endDate, setEndDate] = useState(new Date(getDate()));
+  const [numberofdays, setNumberofdays] = useState(0);
+  const [currentDate, setCurrentDate] = useState("");
+  const [leadCount, setLeadCount] = useState(0);
+  const [expectedDRR, setExpectedDRR] = useState(0);
+  const [data, setData] = useState([]);
+
+  const calculateNumberOfDays = () => {
+    const startTime = startDate.getTime();
+    const endTime = endDate.getTime();
+    const Difference_In_Time = endTime - startTime;
+    var Difference_In_Days = Difference_In_Time / (1000 * 3600 * 24);
+    Difference_In_Days = Math.abs(Difference_In_Days);
+    return Difference_In_Days;
+  };
+
+  const updateData = () => {
+    lastUpdatedDateandTime();
+    calculateleadCount();
+    const variable = {
+      start: startDate.toISOString().slice(0, 10),
+      end: endDate.toISOString().slice(0, 10),
+      month: startDate.getMonth() + 1,
+      numberofDays: numberofdays,
+      leadCountValue: leadCount,
+      expectedDRR: expectedDRR,
+      lastUpdated: currentDate
+    };
+    setData([...data, variable]);
+  };
+
+  useEffect(() => {
+    const newNumberofdays = calculateNumberOfDays();
+    setNumberofdays(newNumberofdays);
+    const lastUpdateddattime = lastUpdatedDateandTime();
+    setCurrentDate(lastUpdateddattime);
+    const DRR = Math.floor(leadCount / numberofdays);
+    setExpectedDRR(DRR);
+    console.log();
+  }, [startDate, endDate, leadCount]);
+
+  const startDateChange = (event) => {
+    const { value } = event.target;
+    setStartDate(new Date(value));
+  };
+
+  const endDateChange = (event) => {
+    const { value } = event.target;
+    setEndDate(new Date(value));
+  };
+
+  const textChange = (event) => {
+    const { value } = event.target;
+    setLeadCount(Number(value));
+  };
+
+  const calculateleadCount = () => {
+    const DRR = leadCount / numberofdays;
+    setExpectedDRR(DRR);
+  }
+
+  const addData = (event) => {
+    event.preventDefault();
+    updateData();
+  };
+
+  function formatDate(date) {
+    const mm = date.getMonth() + 1;
+    const dd = date.getDate();
+    const yyyy = date.getFullYear();
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  function formatTime(date) {
+    const mm = date.getMonth() + 1;
+    const dd = date.getDate();
+    const yyyy = date.getFullYear();
+    const h = date.getHours();
+    const m = date.getMinutes();
+    const s = date.getSeconds();
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    const hh = h % 12 || 12; // Convert 0 to 12 if necessary
+    return `${yyyy}-${mm}-${dd} ${hh}:${m}:${s} ${ampm}`;
+  }
+
+  function lastUpdatedDateandTime() {
+    const date = new Date();
+    const formattime = formatTime(date);
+    return formattime;
+  }
+
+  function cancelDiv () {
+    var div = document.getElementById('addInfo');
+    div.remove();
+  }
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div>
+      <button className='addnew'>Add New</button>
+      <Table id='Table'>
+        <Thead>
+          <Tr>
+            <Td>Action</Td>
+            <Td>Id</Td>
+            <Td>Start Date</Td>
+            <Td>End Date</Td>
+            <Td>Month</Td>
+            <Td>Number of Days</Td>
+            <Td>Lead Count</Td>
+            <Td>Excluded DRR</Td>
+            <Td>Last Updated</Td>
+          </Tr>
+        </Thead>
+        <Tbody>
+          <Tr id='addInfo'>
+            <Td>N/A</Td>
+            <Td>N/A</Td>
+            <Td>
+              <input
+                type="date"
+                onChange={startDateChange}
+                min={getDate()}
+              />
+            </Td>
+            <Td>
+              <input
+                type="date"
+                onChange={endDateChange}
+                min={startDate.toISOString().slice(0, 10)}
+              />
+            </Td>
+            <Td>{startDate.getMonth() + 1}</Td>
+            <Td>{numberofdays}</Td>
+            <Td>
+              <input
+                type="number"
+                onChange={textChange}
+              />
+            </Td>
+            <Td></Td>
+            <Td>
+              <button type="submit" onClick={addData}>Save</button>
+              <button onClick={cancelDiv}>Cancel</button>
+            </Td>
+          </Tr>
+          {data.map((row, index) => (
+            <Tr key={index}>
+              <Td></Td>
+              <Td>{index + 1}</Td>
+              <Td>{formatDate(new Date(row.start))}</Td>
+              <Td>{formatDate(new Date(row.end))}</Td>
+              <Td>{row.month}</Td>
+              <Td>{row.numberofDays}</Td>
+              <Td>{row.leadCountValue}</Td>
+              <Td>{row.expectedDRR}</Td>
+              <Td>{row.lastUpdated}</Td>
+            </Tr>
+          ))}
+        </Tbody>
+      </Table>
     </div>
   );
 }
