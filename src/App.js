@@ -34,14 +34,30 @@ function App() {
     return Difference_In_Days;
   };
 
+  const calculateDates = () => {
+    let dates = "";
+    for(let i = 0; i < values.length - 1; i++) {
+      dates += values[i].year + "-" + values[i].month.number + "-" + values[i].day + ",";
+    }
+    dates += values[values.length - 1].year + "-" + values[values.length - 1].month.number + "-" + values[values.length - 1].day;
+    return dates;
+  }
+
   const updateData = () => {
     lastUpdatedDateandTime();
     calculateleadCount();
+    let dates = calculateDates();
+    if(numberofdays - values.length == 0) {
+      window.alert("Number of Days will become 0! Cannot add data.");
+      window.alert("Please select number of dates excluded less than the total number of days.");
+      return;
+    }
     const variable = {
       start: startDate.toISOString().slice(0, 10),
       end: endDate.toISOString().slice(0, 10),
       month: startDate.getMonth() + 1,
-      numberofDays: numberofdays,
+      datesExcluded: dates,
+      numberofDays: numberofdays - values.length,
       leadCountValue: leadCount,
       expectedDRR: expectedDRR,
       lastUpdated: currentDate
@@ -54,7 +70,7 @@ function App() {
     setNumberofdays(newNumberofdays);
     const lastUpdateddattime = lastUpdatedDateandTime();
     setCurrentDate(lastUpdateddattime);
-    const DRR = Math.floor(leadCount / numberofdays);
+    const DRR = Math.floor(leadCount / (numberofdays - values.length));
     setExpectedDRR(DRR);
   }, [startDate, endDate, leadCount]);
 
@@ -78,11 +94,25 @@ function App() {
     setExpectedDRR(DRR);
   }
 
+  // const addData = (event) => {
+  //   event.preventDefault();
+  //   updateData();
+  //   setAddNewClicked(false);
+  // };
+
   const addData = (event) => {
     event.preventDefault();
     updateData();
-    setAddNewClicked(false); 
+  
+    // Reset the form fields
+    setStartDate(new Date(getDate()));
+    setEndDate(new Date(getDate()));
+    setLeadCount(0);
+    setValues([]);
+  
+    setAddNewClicked(false);
   };
+  
 
   function formatDate(date) {
     const mm = date.getMonth() + 1;
@@ -158,6 +188,8 @@ function App() {
                   multiple
                   value={values}
                   onChange={setValues}
+                  minDate={startDate.toISOString().slice(0, 10)}
+                  maxDate={endDate.toISOString().slice(0, 10)}
                 />
               </Td>
               <Td>{numberofdays}</Td>
@@ -180,7 +212,7 @@ function App() {
               <Td>{formatDate(new Date(row.start))}</Td>
               <Td>{formatDate(new Date(row.end))}</Td>
               <Td>{row.month}</Td>
-              <Td>{formatDate(new Date(row.date))}</Td>
+              <Td>{row.datesExcluded}</Td>
               <Td>{row.numberofDays}</Td>
               <Td>{row.leadCountValue}</Td>
               <Td>{row.expectedDRR}</Td>
