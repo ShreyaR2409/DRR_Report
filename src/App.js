@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Table, Thead, Tbody, Tr, Th, Td } from 'react-super-responsive-table';
+import { Table, Thead, Tbody, Tr, Td } from 'react-super-responsive-table';
 import 'react-super-responsive-table/dist/SuperResponsiveTableStyle.css';
+import DatePicker from "react-multi-date-picker";
+// import "react-multi-date-picker/styles/clean.css"; // Import the CSS for the date picker
 import './App.css';
 
 function getDate() {
@@ -12,11 +14,14 @@ function getDate() {
 }
 
 function App() {
+  const [showAddInfo, setShowAddInfo] = useState(false);
+  const [addNewClicked, setAddNewClicked] = useState(false);
   const [startDate, setStartDate] = useState(new Date(getDate()));
   const [endDate, setEndDate] = useState(new Date(getDate()));
   const [numberofdays, setNumberofdays] = useState(0);
   const [currentDate, setCurrentDate] = useState("");
   const [leadCount, setLeadCount] = useState(0);
+  const [values, setValues] = useState([]); // Define values for the DatePicker
   const [expectedDRR, setExpectedDRR] = useState(0);
   const [data, setData] = useState([]);
 
@@ -51,7 +56,6 @@ function App() {
     setCurrentDate(lastUpdateddattime);
     const DRR = Math.floor(leadCount / numberofdays);
     setExpectedDRR(DRR);
-    console.log();
   }, [startDate, endDate, leadCount]);
 
   const startDateChange = (event) => {
@@ -77,6 +81,7 @@ function App() {
   const addData = (event) => {
     event.preventDefault();
     updateData();
+    setAddNewClicked(false); 
   };
 
   function formatDate(date) {
@@ -94,7 +99,7 @@ function App() {
     const m = date.getMinutes();
     const s = date.getSeconds();
     const ampm = h >= 12 ? 'PM' : 'AM';
-    const hh = h % 12 || 12; // Convert 0 to 12 if necessary
+    const hh = h % 12 || 12; 
     return `${yyyy}-${mm}-${dd} ${hh}:${m}:${s} ${ampm}`;
   }
 
@@ -104,14 +109,15 @@ function App() {
     return formattime;
   }
 
-  function cancelDiv () {
-    var div = document.getElementById('addInfo');
-    div.remove();
+  const cancelDiv = () => {
+    setAddNewClicked(false); 
   }
 
   return (
     <div>
-      <button className='addnew'>Add New</button>
+      <button className='addnew' onClick={() => setAddNewClicked(true)}>
+        Add New
+      </button>
       <Table id='Table'>
         <Thead>
           <Tr>
@@ -120,6 +126,7 @@ function App() {
             <Td>Start Date</Td>
             <Td>End Date</Td>
             <Td>Month</Td>
+            <Td>Dates Excluded</Td>
             <Td>Number of Days</Td>
             <Td>Lead Count</Td>
             <Td>Excluded DRR</Td>
@@ -127,37 +134,45 @@ function App() {
           </Tr>
         </Thead>
         <Tbody>
-          <Tr id='addInfo'>
-            <Td>N/A</Td>
-            <Td>N/A</Td>
-            <Td>
-              <input
-                type="date"
-                onChange={startDateChange}
-                min={getDate()}
-              />
-            </Td>
-            <Td>
-              <input
-                type="date"
-                onChange={endDateChange}
-                min={startDate.toISOString().slice(0, 10)}
-              />
-            </Td>
-            <Td>{startDate.getMonth() + 1}</Td>
-            <Td>{numberofdays}</Td>
-            <Td>
-              <input
-                type="number"
-                onChange={textChange}
-              />
-            </Td>
-            <Td></Td>
-            <Td>
-              <button type="submit" onClick={addData}>Save</button>
-              <button onClick={cancelDiv}>Cancel</button>
-            </Td>
-          </Tr>
+          {addNewClicked && (
+            <Tr id='addInfo'>
+              <Td>N/A</Td>
+              <Td>N/A</Td>
+              <Td>
+                <input
+                  type='date'
+                  onChange={startDateChange}
+                  min={getDate()}
+                />
+              </Td>
+              <Td>
+                <input
+                  type='date'
+                  onChange={endDateChange}
+                  min={startDate.toISOString().slice(0, 10)}
+                />
+              </Td>
+              <Td>{startDate.getMonth() + 1}</Td>
+              <Td>
+                <DatePicker
+                  multiple
+                  value={values}
+                  onChange={setValues}
+                />
+              </Td>
+              <Td>{numberofdays}</Td>
+              <Td>
+                <input type='number' onChange={textChange} />
+              </Td>
+              <Td></Td>
+              <Td>
+                <button type='submit' onClick={addData}>
+                  Save
+                </button>
+                <button onClick={cancelDiv}>Cancel</button>
+              </Td>
+            </Tr>
+          )}
           {data.map((row, index) => (
             <Tr key={index}>
               <Td></Td>
@@ -165,6 +180,7 @@ function App() {
               <Td>{formatDate(new Date(row.start))}</Td>
               <Td>{formatDate(new Date(row.end))}</Td>
               <Td>{row.month}</Td>
+              <Td>{formatDate(new Date(row.date))}</Td>
               <Td>{row.numberofDays}</Td>
               <Td>{row.leadCountValue}</Td>
               <Td>{row.expectedDRR}</Td>
